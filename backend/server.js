@@ -7,6 +7,7 @@ const cors       = require('cors');
 const path       = require('path');
 
 const app = express();
+app.use(express.static(path.join(__dirname, "../public")));
 
 app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
@@ -40,4 +41,4 @@ app.get('*', (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`✅  Campus Logistics running on http://localhost:${PORT}`));
+app.listen(PORT, () => console.log(`✅  Campus Logistics running on https://ideathon-2k26.onrender.com`));
