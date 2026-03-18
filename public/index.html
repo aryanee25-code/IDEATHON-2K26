@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Smart Campus Logistics — Jote Hub</title>
+<style>
+/* ─── Reset & Base ─────────────────────────────────────────────────────── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --brand:#2563eb;--brand-d:#1d4ed8;--brand-l:#dbeafe;
+  --green:#16a34a;--green-l:#dcfce7;
+  --red:#dc2626;--red-l:#fee2e2;
+  --amber:#d97706;--amber-l:#fef3c7;
+  --purple:#7c3aed;--purple-l:#ede9fe;
+  --gray-50:#f9fafb;--gray-100:#f3f4f6;--gray-200:#e5e7eb;
+  --gray-300:#d1d5db;--gray-400:#9ca3af;--gray-600:#4b5563;
+  --gray-700:#374151;--gray-800:#1f2937;--gray-900:#111827;
+  --radius:10px;--shadow:0 1px 4px rgba(0,0,0,.1);
+  --shadow-lg:0 4px 20px rgba(0,0,0,.13);
+}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--gray-50);color:var(--gray-800);min-height:100vh}
+a{color:var(--brand);text-decoration:none}
+button{cursor:pointer;font:inherit}
+
+/* ─── Utilities ─────────────────────────────────────────────────────────── */
+.hidden{display:none!important}
+.flex{display:flex}.gap-2{gap:.5rem}.gap-3{gap:.75rem}.gap-4{gap:1rem}
+.items-center{align-items:center}.justify-between{justify-content:space-between}
+.flex-wrap{flex-wrap:wrap}
+.mt-1{margin-top:.25rem}.mt-2{margin-top:.5rem}.mt-3{margin-top:.75rem}.mt-4{margin-top:1rem}
+.mb-2{margin-bottom:.5rem}.mb-4{margin-bottom:1rem}
+.text-sm{font-size:.85rem}.text-xs{font-size:.75rem}
+.text-muted{color:var(--gray-400)}
+.fw-600{font-weight:600}.fw-700{font-weight:700}
+.w-full{width:100%}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem}
+@media(max-width:640px){.grid-2,.grid-3{grid-template-columns:1fr}}
+
+/* ─── Buttons ───────────────────────────────────────────────────────────── */
+.btn{display:inline-flex;align-items:center;gap:.4rem;padding:.5rem 1rem;border-radius:var(--radius);border:none;font-size:.9rem;font-weight:600;transition:.15s}
+.btn-primary{background:var(--brand);color:#fff}.btn-primary:hover{background:var(--brand-d)}
+.btn-green{background:var(--green);color:#fff}.btn-green:hover{filter:brightness(.92)}
+.btn-red{background:var(--red);color:#fff}.btn-red:hover{filter:brightness(.92)}
+.btn-amber{background:var(--amber);color:#fff}.btn-amber:hover{filter:brightness(.92)}
+.btn-ghost{background:transparent;border:1.5px solid var(--gray-300);color:var(--gray-700)}.btn-ghost:hover{background:var(--gray-100)}
+.btn-sm{padding:.35rem .75rem;font-size:.8rem}
+.btn:disabled{opacity:.55;cursor:not-allowed}
+
+/* ─── Cards ─────────────────────────────────────────────────────────────── */
+.card{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);padding:1.25rem}
+.card-title{font-size:1.05rem;font-weight:700;margin-bottom:1rem;color:var(--gray-900)}
+
+/* ─── Badges ────────────────────────────────────────────────────────────── */
+.badge{display:inline-block;padding:.2rem .6rem;border-radius:999px;font-size:.75rem;font-weight:600}
+.badge-arrived{background:#e0f2fe;color:#0369a1}
+.badge-sorted{background:var(--amber-l);color:#92400e}
+.badge-dispatched{background:var(--purple-l);color:#5b21b6}
+.badge-delivered{background:var(--green-l);color:#166534}
+.badge-return_requested{background:#fee2e2;color:#991b1b}
+.badge-returned{background:#f3f4f6;color:#374151}
+
+/* ─── Forms ─────────────────────────────────────────────────────────────── */
+.form-group{margin-bottom:1rem}
+.form-group label{display:block;font-size:.85rem;font-weight:600;margin-bottom:.35rem;color:var(--gray-700)}
+.form-control{width:100%;padding:.55rem .8rem;border:1.5px solid var(--gray-300);border-radius:8px;font:inherit;font-size:.9rem;outline:none;transition:.15s}
+.form-control:focus{border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-l)}
+textarea.form-control{resize:vertical;min-height:80px}
+
+/* ─── Toast ─────────────────────────────────────────────────────────────── */
+#toast-container{position:fixed;top:1rem;right:1rem;z-index:9999;display:flex;flex-direction:column;gap:.5rem}
+.toast{padding:.75rem 1.25rem;border-radius:var(--radius);color:#fff;font-size:.9rem;font-weight:500;box-shadow:var(--shadow-lg);animation:slideIn .25s ease}
+.toast-success{background:var(--green)}.toast-error{background:var(--red)}.toast-info{background:var(--brand)}.toast-warn{background:var(--amber)}
+@keyframes slideIn{from{transform:translateX(120%);opacity:0}to{transform:translateX(0);opacity:1}}
+
+/* ─── Modal ─────────────────────────────────────────────────────────────── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:900;display:flex;align-items:center;justify-content:center;padding:1rem}
+.modal{background:#fff;border-radius:14px;padding:1.75rem;width:100%;max-width:520px;box-shadow:var(--shadow-lg);max-height:90vh;overflow-y:auto}
+.modal-title{font-size:1.15rem;font-weight:700;margin-bottom:1.25rem}
+
+/* ─── Login / Track Public ──────────────────────────────────────────────── */
+#login-screen,#track-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#1e3a8a 0%,#2563eb 100%)}
+.auth-box{background:#fff;border-radius:16px;padding:2.5rem;width:100%;max-width:420px;box-shadow:var(--shadow-lg)}
+.auth-logo{text-align:center;margin-bottom:1.5rem}
+.auth-logo h1{font-size:1.5rem;font-weight:800;color:var(--gray-900);margin-top:.5rem}
+.auth-logo p{font-size:.85rem;color:var(--gray-400);margin-top:.2rem}
+.auth-tabs{display:flex;gap:.5rem;margin-bottom:1.5rem;background:var(--gray-100);border-radius:8px;padding:.25rem}
+.auth-tab{flex:1;padding:.5rem;border:none;border-radius:6px;background:transparent;font:.9rem/1 'Segoe UI',sans-serif;font-weight:600;color:var(--gray-600);cursor:pointer;transition:.15s}
+.auth-tab.active{background:#fff;color:var(--brand);box-shadow:var(--shadow)}
+
+/* ─── App Shell ─────────────────────────────────────────────────────────── */
+#app-shell{display:none;min-height:100vh;flex-direction:column}
+header{background:var(--brand);color:#fff;padding:.85rem 1.5rem;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+header h2{font-size:1.1rem;font-weight:800;letter-spacing:-.3px}
+nav{background:var(--gray-800);padding:.4rem 1rem;display:flex;gap:.25rem;flex-wrap:wrap;overflow-x:auto}
+nav button{background:transparent;border:none;color:var(--gray-400);padding:.45rem .85rem;border-radius:7px;font-size:.85rem;font-weight:600;transition:.15s;white-space:nowrap}
+nav button:hover,nav button.active{background:var(--brand);color:#fff}
+main{flex:1;padding:1.5rem;max-width:1100px;margin:0 auto;width:100%}
+
+/* ─── Stats ─────────────────────────────────────────────────────────────── */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:1rem;margin-bottom:1.5rem}
+.stat-card{background:#fff;border-radius:var(--radius);padding:1rem;text-align:center;box-shadow:var(--shadow)}
+.stat-card .num{font-size:2rem;font-weight:800;line-height:1}
+.stat-card .lbl{font-size:.75rem;color:var(--gray-400);font-weight:600;margin-top:.25rem}
+.stat-arrived .num{color:#0369a1}.stat-sorted .num{color:var(--amber)}.stat-dispatched .num{color:var(--purple)}
+.stat-delivered .num{color:var(--green)}.stat-return .num{color:var(--red)}.stat-returned .num{color:var(--gray-600)}
+
+/* ─── Parcel Table ──────────────────────────────────────────────────────── */
+.table-wrap{overflow-x:auto;background:#fff;border-radius:var(--radius);box-shadow:var(--shadow)}
+table{width:100%;border-collapse:collapse;font-size:.875rem}
+th,td{padding:.65rem 1rem;text-align:left;border-bottom:1px solid var(--gray-100)}
+th{font-weight:700;color:var(--gray-600);background:var(--gray-50);font-size:.8rem;text-transform:uppercase;letter-spacing:.3px}
+tr:hover td{background:var(--gray-50)}
+
+/* ─── Timeline ──────────────────────────────────────────────────────────── */
+.timeline{list-style:none;position:relative;padding-left:1.5rem}
+.timeline::before{content:'';position:absolute;left:.5rem;top:0;bottom:0;width:2px;background:var(--gray-200)}
+.timeline li{position:relative;margin-bottom:1rem;padding-left:.75rem}
+.timeline li::before{content:'';position:absolute;left:-.875rem;top:.35rem;width:.7rem;height:.7rem;border-radius:50%;background:var(--brand);border:2px solid #fff;box-shadow:0 0 0 2px var(--brand)}
+
+/* ─── Driver Dashboard ──────────────────────────────────────────────────── */
+.driver-card{background:#fff;border-radius:var(--radius);padding:1rem;box-shadow:var(--shadow);margin-bottom:.75rem}
+.driver-card-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem}
+
+/* ─── Track Page ────────────────────────────────────────────────────────── */
+.track-result{background:#fff;border-radius:14px;padding:1.5rem;margin-top:1.5rem;box-shadow:var(--shadow-lg)}
+.progress-bar{display:flex;align-items:center;gap:0;margin:1.25rem 0;overflow-x:auto;padding:.5rem 0}
+.prog-step{display:flex;flex-direction:column;align-items:center;flex:1;min-width:70px;position:relative}
+.prog-step:not(:last-child)::after{content:'';position:absolute;top:14px;left:50%;width:100%;height:2px;background:var(--gray-200);z-index:0}
+.prog-step.done:not(:last-child)::after{background:var(--green)}
+.prog-dot{width:28px;height:28px;border-radius:50%;background:var(--gray-200);display:flex;align-items:center;justify-content:center;font-size:.8rem;z-index:1;position:relative;border:2px solid var(--gray-200)}
+.prog-step.done .prog-dot{background:var(--green);border-color:var(--green);color:#fff}
+.prog-step.active .prog-dot{background:var(--brand);border-color:var(--brand);color:#fff;box-shadow:0 0 0 4px var(--brand-l)}
+.prog-label{font-size:.68rem;font-weight:600;margin-top:.35rem;color:var(--gray-400);text-align:center}
+.prog-step.done .prog-label,.prog-step.active .prog-label{color:var(--gray-700)}
+
+/* ─── Return Panel ──────────────────────────────────────────────────────── */
+.return-panel{margin-top:1.5rem;border:2px dashed var(--red);border-radius:var(--radius);padding:1.25rem;background:var(--red-l)}
+.return-panel h4{color:var(--red);margin-bottom:.75rem;font-size:.95rem}
+</style>
+</head>
+<body>
+<div id="toast-container"></div>
+
+<!-- ════════════════════════════════════════════════════════════════
+     LOGIN / TRACK PUBLIC SCREEN
+════════════════════════════════════════════════════════════════ -->
+<div id="login-screen">
+  <div class="auth-box">
+    <div class="auth-logo">
+      <div style="font-size:2.5rem">📦</div>
+      <h1>Jote Hub</h1>
+      <p>Smart Campus Logistics</p>
+    </div>
+
+    <!-- Tabs -->
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="tab-login" onclick="switchAuthTab('login')">Staff Login</button>
+      <button class="auth-tab" id="tab-track" onclick="switchAuthTab('track')">Track Order</button>
+    </div>
+
+    <!-- Login form -->
+    <div id="login-form-wrap">
+      <div class="form-group">
+        <label>Username</label>
+        <input id="login-user" class="form-control" placeholder="Enter username" autocomplete="username"/>
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input id="login-pass" class="form-control" type="password" placeholder="Enter password" autocomplete="current-password"
+               onkeydown="if(event.key==='Enter')doLogin()"/>
+      </div>
+      <button class="btn btn-primary w-full" onclick="doLogin()">Login →</button>
+    </div>
+
+    <!-- Track form (on login page) -->
+    <div id="track-form-wrap" class="hidden">
+      <div class="form-group">
+        <label>Tracking ID</label>
+        <input id="pub-track-id" class="form-control" placeholder="e.g. TRK-20240301-001"
+               onkeydown="if(event.key==='Enter')doPublicTrack()"/>
+      </div>
+      <button class="btn btn-primary w-full" onclick="doPublicTrack()">Track Package →</button>
+
+      <!-- Inline track result -->
+      <div id="pub-track-result" class="hidden"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════
+     APP SHELL (authenticated)
+════════════════════════════════════════════════════════════════ -->
+<div id="app-shell" style="display:none;flex-direction:column">
+  <header>
+    <div>
+      <span style="font-size:1.4rem">📦</span>
+      <strong style="margin-left:.5rem">Jote Hub</strong>
+      <span id="header-role-badge" style="margin-left:.75rem;font-size:.75rem;background:rgba(255,255,255,.2);padding:.2rem .5rem;border-radius:999px"></span>
+    </div>
+    <div class="flex items-center gap-3">
+      <span id="header-user" style="font-size:.9rem;opacity:.85"></span>
+      <button class="btn btn-ghost btn-sm" style="color:#fff;border-color:rgba(255,255,255,.4)" onclick="doLogout()">Logout</button>
+    </div>
+  </header>
+
+  <nav id="main-nav">
+    <!-- built dynamically by role -->
+  </nav>
+
+  <main>
+    <!-- Dashboard -->
+    <div id="page-dashboard" class="hidden">
+      <div id="stats-grid" class="stats-grid"></div>
+      <div class="flex items-center justify-between mb-2 flex-wrap gap-2">
+        <h3 class="fw-700">Recent Parcels</h3>
+        <div class="flex gap-2">
+          <input id="dash-search" class="form-control" style="width:220px" placeholder="Search parcels…" oninput="debouncedSearch(this.value)"/>
+          <button class="btn btn-primary btn-sm" onclick="showModal('modal-add-parcel')">+ Add Parcel</button>
+        </div>
+      </div>
+      <div id="parcel-table-wrap" class="table-wrap">
+        <table>
+          <thead><tr><th>Tracking ID</th><th>Courier</th><th>Recipient</th><th>Destination</th><th>Status</th><th>Updated</th><th>Actions</th></tr></thead>
+          <tbody id="parcel-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Track Order (staff internal) -->
+    <div id="page-track" class="hidden">
+      <div class="card" style="max-width:600px">
+        <div class="card-title">🔍 Track Parcel</div>
+        <div class="form-group">
+          <label>Tracking ID</label>
+          <input id="staff-track-id" class="form-control" placeholder="Enter tracking ID"
+                 onkeydown="if(event.key==='Enter')doStaffTrack()"/>
+        </div>
+        <button class="btn btn-primary" onclick="doStaffTrack()">Track</button>
+        <div id="staff-track-result" class="mt-4"></div>
+      </div>
+    </div>
+
+    <!-- Dispatch -->
+    <div id="page-dispatch" class="hidden">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="fw-700">Dispatch Runs</h3>
+        <button class="btn btn-primary" onclick="showModal('modal-dispatch')">+ New Dispatch</button>
+      </div>
+      <div id="dispatch-list"></div>
+    </div>
+
+    <!-- Returns (staff) -->
+    <div id="page-returns" class="hidden">
+      <h3 class="fw-700 mb-4">↩ Return Requests</h3>
+      <div id="returns-list"></div>
+    </div>
+
+    <!-- Driver Panel -->
+    <div id="page-driver" class="hidden">
+      <h3 class="fw-700 mb-4">🚚 My Deliveries</h3>
+      <div class="flex gap-2 mb-4">
+        <button class="btn btn-ghost btn-sm" onclick="loadDriverParcels('dispatched')">Pending</button>
+        <button class="btn btn-ghost btn-sm" onclick="loadDriverParcels('delivered')">Delivered</button>
+        <button class="btn btn-ghost btn-sm" onclick="loadDriverParcels('all')">All</button>
+      </div>
+      <div id="driver-parcels-list"></div>
+    </div>
+
+    <!-- Admin Users -->
+    <div id="page-admin" class="hidden">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="fw-700">Admin — Manage Users</h3>
+        <div class="flex gap-2">
+          <button class="btn btn-ghost btn-sm" onclick="adminExport()">⬇ Export JSON</button>
+          <button class="btn btn-primary btn-sm" onclick="showModal('modal-add-user')">+ Add User</button>
+        </div>
+      </div>
+      <div id="users-list"></div>
+    </div>
+  </main>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════
+     MODALS
+════════════════════════════════════════════════════════════════ -->
+
+<!-- Add Parcel -->
+<div id="modal-add-parcel" class="modal-overlay hidden" onclick="closeModalOnOverlay(event,'modal-add-parcel')">
+  <div class="modal">
+    <div class="modal-title">📦 Receive New Parcel</div>
+    <div class="grid-2">
+      <div class="form-group"><label>Tracking ID *</label><input id="p-tracking" class="form-control" placeholder="TRK-..."/></div>
+      <div class="form-group"><label>Courier Name *</label><input id="p-courier" class="form-control" placeholder="DHL, FedEx…"/></div>
+    </div>
+    <div class="grid-2">
+      <div class="form-group"><label>Source</label><input id="p-source" class="form-control" value="Itanagar"/></div>
+      <div class="form-group"><label>Destination *</label><input id="p-dest" class="form-control" placeholder="Building / Room"/></div>
+    </div>
+    <div class="grid-2">
+      <div class="form-group"><label>Recipient Name</label><input id="p-recip" class="form-control"/></div>
+      <div class="form-group"><label>Phone</label><input id="p-phone" class="form-control" type="tel"/></div>
+    </div>
+    <div class="grid-2">
+      <div class="form-group"><label>Weight (kg)</label><input id="p-weight" class="form-control" type="number" step="0.1"/></div>
+      <div class="form-group"><label>Notes</label><input id="p-notes" class="form-control"/></div>
+    </div>
+    <div class="flex gap-2 justify-between">
+      <button class="btn btn-ghost" onclick="hideModal('modal-add-parcel')">Cancel</button>
+      <button class="btn btn-primary" onclick="submitParcel()">Receive Parcel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Parcel Detail -->
+<div id="modal-parcel-detail" class="modal-overlay hidden" onclick="closeModalOnOverlay(event,'modal-parcel-detail')">
+  <div class="modal" style="max-width:620px">
+    <div class="modal-title" id="detail-title">Parcel Detail</div>
+    <div id="detail-body"></div>
+    <div class="flex gap-2 mt-4" style="flex-wrap:wrap" id="detail-actions"></div>
+    <button class="btn btn-ghost mt-3 w-full" onclick="hideModal('modal-parcel-detail')">Close</button>
+  </div>
+</div>
+
+<!-- Dispatch -->
+<div id="modal-dispatch" class="modal-overlay hidden" onclick="closeModalOnOverlay(event,'modal-dispatch')">
+  <div class="modal">
+    <div class="modal-title">🚚 New Dispatch Run</div>
+    <div class="grid-2">
+      <div class="form-group"><label>Driver Name *</label><input id="d-driver" class="form-control"/></div>
+      <div class="form-group"><label>Vehicle *</label><input id="d-vehicle" class="form-control" placeholder="Bike / Van / Truck"/></div>
+    </div>
+    <div class="form-group"><label>Notes</label><input id="d-notes" class="form-control"/></div>
+    <div class="form-group">
+      <label>Select Sorted Parcels</label>
+      <div id="dispatch-parcel-list" style="max-height:200px;overflow-y:auto;border:1.5px solid var(--gray-300);border-radius:8px;padding:.5rem"></div>
+    </div>
+    <div class="flex gap-2 justify-between">
+      <button class="btn btn-ghost" onclick="hideModal('modal-dispatch')">Cancel</button>
+      <button class="btn btn-primary" onclick="submitDispatch()">Dispatch</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add User -->
+<div id="modal-add-user" class="modal-overlay hidden" onclick="closeModalOnOverlay(event,'modal-add-user')">
+  <div class="modal">
+    <div class="modal-title">👤 Add User</div>
+    <div class="grid-2">
+      <div class="form-group"><label>Username *</label><input id="u-user" class="form-control"/></div>
+      <div class="form-group"><label>Full Name *</label><input id="u-name" class="form-control"/></div>
+    </div>
+    <div class="grid-2">
+      <div class="form-group"><label>Password *</label><input id="u-pass" class="form-control" type="password"/></div>
+      <div class="form-group"><label>Role *</label>
+        <select id="u-role" class="form-control">
+          <option value="worker">Worker</option>
+          <option value="driver">Driver</option>
+          <option value="admin">Admin</option>
+        </select>
+      </div>
+    </div>
+    <div class="flex gap-2 justify-between">
+      <button class="btn btn-ghost" onclick="hideModal('modal-add-user')">Cancel</button>
+      <button class="btn btn-primary" onclick="submitUser()">Create User</button>
+    </div>
+  </div>
+</div>
+
+<!-- Override -->
+<div id="modal-override" class="modal-overlay hidden" onclick="closeModalOnOverlay(event,'modal-override')">
+  <div class="modal">
+    <div class="modal-title">⚙️ Admin Override</div>
+    <div class="form-group"><label>New Status *</label>
+      <select id="ov-status" class="form-control">
+        <option value="arrived">Arrived</option><option value="sorted">Sorted</option>
+        <option value="dispatched">Dispatched</option><option value="delivered">Delivered</option>
+        <option value="return_requested">Return Requested</option><option value="returned">Returned</option>
+      </select>
+    </div>
+    <div class="form-group"><label>Reason *</label><textarea id="ov-reason" class="form-control" placeholder="Reason for override…"></textarea></div>
+    <div class="flex gap-2 justify-between">
+      <button class="btn btn-ghost" onclick="hideModal('modal-override')">Cancel</button>
+      <button class="btn btn-red" onclick="submitOverride()">Apply Override</button>
+    </div>
+  </div>
+</div>
+
+<!-- Return Review (staff) -->
+<div id="modal-return-review" class="modal-overlay hidden" onclick="closeModalOnOverlay(event,'modal-return-review')">
+  <div class="modal">
+    <div class="modal-title">↩ Review Return Request</div>
+    <div id="return-review-body"></div>
+    <div class="form-group mt-3"><label>Staff Notes</label><textarea id="return-review-note" class="form-control"></textarea></div>
+    <div class="flex gap-2 mt-3 flex-wrap">
+      <button class="btn btn-green" onclick="resolveReturn('approved')">✓ Approve</button>
+      <button class="btn btn-amber" onclick="resolveReturn('picked_up')">📦 Mark Picked Up</button>
+      <button class="btn btn-red" onclick="resolveReturn('rejected')">✗ Reject</button>
+      <button class="btn btn-ghost" onclick="hideModal('modal-return-review')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ══════════════════════════════════════════════════════════
+   STATE
+══════════════════════════════════════════════════════════ */
+let currentUser = null;
+let parcels     = [];
+let currentParcel = null;
+let currentReturnId = null;
+let driverFilter = 'dispatched';
+
+/* ══════════════════════════════════════════════════════════
+   UTILITIES
+══════════════════════════════════════════════════════════ */
+function toast(msg, type='info'){
+  const t=document.createElement('div');
+  t.className=`toast toast-${type}`;t.textContent=msg;
+  document.getElementById('toast-container').appendChild(t);
+  setTimeout(()=>t.remove(),3500);
+}
+function fmtDate(ts){return ts?new Date(ts).toLocaleString('en-IN',{dateStyle:'medium',timeStyle:'short'}):'—'}
+function badge(s){return`<span class="badge badge-${s}">${s.replace('_',' ')}</span>`}
+
+function showModal(id){document.getElementById(id).classList.remove('hidden')}
+function hideModal(id){document.getElementById(id).classList.add('hidden')}
+function closeModalOnOverlay(e,id){if(e.target.id===id)hideModal(id)}
+
+async function api(method,url,body){
+  const opt={method,headers:{'Content-Type':'application/json'},credentials:'include'};
+  if(body)opt.body=JSON.stringify(body);
+  const r=await fetch(url,opt);
+  const data=await r.json().catch(()=>({}));
+  if(!r.ok)throw new Error(data.error||'Request failed');
+  return data;
+}
+
+let _searchTimer;
+function debouncedSearch(q){clearTimeout(_searchTimer);_searchTimer=setTimeout(()=>searchParcels(q),300)}
+
+/* ══════════════════════════════════════════════════════════
+   AUTH — LOGIN SCREEN TABS
+══════════════════════════════════════════════════════════ */
+function switchAuthTab(tab){
+  document.getElementById('tab-login').classList.toggle('active',tab==='login');
+  document.getElementById('tab-track').classList.toggle('active',tab==='track');
+  document.getElementById('login-form-wrap').classList.toggle('hidden',tab!=='login');
+  document.getElementById('track-form-wrap').classList.toggle('hidden',tab!=='track');
+  document.getElementById('pub-track-result').classList.add('hidden');
+}
+
+async function doLogin(){
+  const username=document.getElementById('login-user').value.trim();
+  const password=document.getElementById('login-pass').value;
+  if(!username||!password)return toast('Enter username and password','error');
+  try{
+    const data=await api('POST','/api/auth/login',{username,password});
+    currentUser=data.user;
+    bootApp();
+  }catch(e){toast(e.message,'error')}
+}
+
+async function doLogout(){
+  await api('POST','/api/auth/logout');
+  currentUser=null;
+  document.getElementById('app-shell').style.display='none';
+  document.getElementById('login-screen').style.display='flex';
+}
+
+/* ══════════════════════════════════════════════════════════
+   PUBLIC TRACK (on login page)
+══════════════════════════════════════════════════════════ */
+async function doPublicTrack(){
+  const tid=document.getElementById('pub-track-id').value.trim();
+  if(!tid)return toast('Enter a tracking ID','error');
+  const wrap=document.getElementById('pub-track-result');
+  wrap.innerHTML='<p class="text-muted mt-2">Searching…</p>';
+  wrap.classList.remove('hidden');
+  try{
+    const p=await api('GET',`/api/parcels/track/${encodeURIComponent(tid)}`);
+    wrap.innerHTML=renderTrackResult(p,false);
+  }catch(e){
+    wrap.innerHTML=`<p class="text-sm" style="color:var(--red);margin-top:.75rem">❌ ${e.message}</p>`;
+  }
+}
+
+function renderTrackResult(p, staffMode=false){
+  const steps=['arrived','sorted','dispatched','delivered'];
+  const statusIdx=steps.indexOf(p.status);
+
+  const progress=`<div class="progress-bar">
+    ${steps.map((s,i)=>{
+      const done=i<statusIdx;
+      const active=i===statusIdx||(p.status==='return_requested'&&s==='delivered')||(p.status==='returned'&&s==='delivered');
+      const icons=['📥','🗂️','🚚','✅'];
+      return`<div class="prog-step${done?' done':''}${active?' active':''}">
+        <div class="prog-dot">${icons[i]}</div>
+        <div class="prog-label">${s.charAt(0).toUpperCase()+s.slice(1)}</div>
+      </div>`;
+    }).join('')}
+  </div>`;
+
+  const hist=(p.history||[]).map(h=>`<li>
+    <div class="fw-600 text-sm">${h.status.replace('_',' ')} ${h.actor_label?`<span class="text-muted text-xs">— ${h.actor_label}</span>`:''}</div>
+    ${h.note?`<div class="text-xs text-muted">${h.note}</div>`:''}
+    <div class="text-xs text-muted">${fmtDate(h.time)}</div>
+  </li>`).join('');
+
+  // Return panel — only show if delivered and not already return_requested
+  let returnPanel='';
+  if((p.status==='delivered')&&!staffMode){
+    returnPanel=`<div class="return-panel">
+      <h4>↩ Request a Return</h4>
+      <div class="form-group"><label>Reason for return</label>
+        <textarea id="pub-return-reason" class="form-control" placeholder="Describe why you want to return this package…"></textarea>
+      </div>
+      <button class="btn btn-red btn-sm" onclick="submitPublicReturn('${p.tracking_id}')">Submit Return Request</button>
+    </div>`;
+  }
+  if(p.status==='return_requested'&&!staffMode){
+    returnPanel=`<div class="return-panel"><h4>↩ Return Request Submitted</h4><p class="text-sm">Your return request is being reviewed by our team.</p></div>`;
+  }
+  if(p.status==='returned'&&!staffMode){
+    returnPanel=`<div style="margin-top:1rem;padding:1rem;background:var(--gray-100);border-radius:var(--radius)"><p class="text-sm fw-600">✅ Package has been returned successfully.</p></div>`;
+  }
+
+  return`<div class="track-result">
+    <div class="flex items-center justify-between flex-wrap gap-2 mb-3">
+      <div>
+        <div class="fw-700" style="font-size:1.1rem">${p.tracking_id}</div>
+        <div class="text-sm text-muted">${p.courier_name} • ${p.source} → ${p.destination}</div>
+      </div>
+      ${badge(p.status)}
+    </div>
+    ${progress}
+    <div class="grid-2 mt-3" style="gap:.75rem">
+      <div><span class="text-xs text-muted">Recipient</span><div class="text-sm fw-600">${p.recipient_name||'—'}</div></div>
+      ${p.driver?`<div><span class="text-xs text-muted">Driver</span><div class="text-sm fw-600">${p.driver} / ${p.vehicle||''}</div></div>`:''}
+      <div><span class="text-xs text-muted">Updated</span><div class="text-sm">${fmtDate(p.updated_at)}</div></div>
+    </div>
+    ${hist?`<div class="mt-3"><div class="text-xs fw-600 text-muted mb-2">HISTORY</div><ul class="timeline">${hist}</ul></div>`:''}
+    ${returnPanel}
+  </div>`;
+}
+
+async function submitPublicReturn(trackingId){
+  const reason=document.getElementById('pub-return-reason').value.trim();
+  if(!reason)return toast('Please enter a reason','error');
+  try{
+    await api('POST','/api/returns/request',{tracking_id:trackingId,reason});
+    toast('Return request submitted!','success');
+    doPublicTrack();
+  }catch(e){toast(e.message,'error')}
+}
+
+/* ══════════════════════════════════════════════════════════
+   BOOT APP (after login)
+══════════════════════════════════════════════════════════ */
+function bootApp(){
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('app-shell').style.display='flex';
+  document.getElementById('header-user').textContent=currentUser.name;
+  document.getElementById('header-role-badge').textContent=currentUser.role.toUpperCase();
+
+  buildNav();
+
+  if(currentUser.role==='driver'){
+    showPage('driver');
+    loadDriverParcels('dispatched');
+  } else {
+    showPage('dashboard');
+    loadDashboard();
+  }
+}
+
+function buildNav(){
+  const nav=document.getElementById('main-nav');
+  nav.innerHTML='';
+  const role=currentUser.role;
+
+  const pages=[
+    {id:'dashboard',label:'📊 Dashboard',roles:['admin','worker']},
+    {id:'track',label:'🔍 Track Order',roles:['admin','worker']},
+    {id:'dispatch',label:'🚚 Dispatch',roles:['admin','worker']},
+    {id:'returns',label:'↩ Returns',roles:['admin','worker']},
+    {id:'driver',label:'🚗 My Deliveries',roles:['driver','admin']},
+    {id:'admin',label:'⚙️ Admin',roles:['admin']},
+  ];
+
+  for(const p of pages){
+    if(!p.roles.includes(role))continue;
+    const btn=document.createElement('button');
+    btn.textContent=p.label;
+    btn.dataset.page=p.id;
+    btn.onclick=()=>{
+      showPage(p.id);
+      if(p.id==='dashboard')loadDashboard();
+      if(p.id==='dispatch')loadDispatch();
+      if(p.id==='returns')loadReturns();
+      if(p.id==='driver')loadDriverParcels(driverFilter);
+      if(p.id==='admin')loadUsers();
+    };
+    nav.appendChild(btn);
+  }
+}
+
+function showPage(id){
+  document.querySelectorAll('main > div').forEach(d=>d.classList.add('hidden'));
+  document.getElementById(`page-${id}`).classList.remove('hidden');
+  document.querySelectorAll('#main-nav button').forEach(b=>b.classList.toggle('active',b.dataset.page===id));
+}
+
+/* ══════════════════════════════════════════════════════════
+   DASHBOARD
+══════════════════════════════════════════════════════════ */
+async function loadDashboard(){
+  const [stats]=await Promise.all([
+    api('GET','/api/parcels/stats'),
+    loadParcels()
+  ]);
+  renderStats(stats);
+}
+
+function renderStats(s){
+  document.getElementById('stats-grid').innerHTML=`
+    <div class="stat-card stat-arrived"><div class="num">${s.arrived||0}</div><div class="lbl">Arrived</div></div>
+    <div class="stat-card stat-sorted"><div class="num">${s.sorted||0}</div><div class="lbl">Sorted</div></div>
+    <div class="stat-card stat-dispatched"><div class="num">${s.dispatched||0}</div><div class="lbl">Dispatched</div></div>
+    <div class="stat-card stat-delivered"><div class="num">${s.delivered||0}</div><div class="lbl">Delivered</div></div>
+    <div class="stat-card stat-return"><div class="num">${s.return_requested||0}</div><div class="lbl">Return Req.</div></div>
+    <div class="stat-card stat-returned"><div class="num">${s.returned||0}</div><div class="lbl">Returned</div></div>
+  `;
+}
+
+async function loadParcels(){
+  parcels=await api('GET','/api/parcels');
+  renderParcelTable(parcels);
+}
+
+async function searchParcels(q){
+  if(!q){loadParcels();return}
+  parcels=await api('GET',`/api/parcels/search?q=${encodeURIComponent(q)}`);
+  renderParcelTable(parcels);
+}
+
+function renderParcelTable(list){
+  const tb=document.getElementById('parcel-tbody');
+  if(!list.length){tb.innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--gray-400);padding:2rem">No parcels found</td></tr>';return}
+  tb.innerHTML=list.map(p=>`<tr>
+    <td><code style="font-size:.8rem">${p.tracking_id}</code></td>
+    <td>${p.courier_name}</td>
+    <td>${p.recipient_name||'—'}</td>
+    <td>${p.destination}</td>
+    <td>${badge(p.status)}</td>
+    <td class="text-xs text-muted">${fmtDate(p.updated_at)}</td>
+    <td>
+      <div class="flex gap-1 flex-wrap">
+        <button class="btn btn-ghost btn-sm" onclick="openDetail(${p.id})">Detail</button>
+        ${p.status==='arrived'?`<button class="btn btn-amber btn-sm" onclick="sortParcel(${p.id})">Sort</button>`:''}
+        ${p.status==='dispatched'&&currentUser.role!=='driver'?`<button class="btn btn-green btn-sm" onclick="confirmDelivery(${p.id})">✓ Deliver</button>`:''}
+        ${currentUser.role==='admin'?`<button class="btn btn-red btn-sm" onclick="openOverride(${p.id})">Override</button>`:''}
+      </div>
+    </td>
+  </tr>`).join('');
+}
+
+async function sortParcel(id){
+  try{await api('POST',`/api/parcels/${id}/sort`);toast('Parcel sorted!','success');loadDashboard()}
+  catch(e){toast(e.message,'error')}
+}
+
+async function confirmDelivery(id){
+  try{await api('POST',`/api/delivery/confirm/${id}`);toast('Marked as delivered!','success');loadDashboard()}
+  catch(e){toast(e.message,'error')}
+}
+
+/* ── Parcel Detail ─────────────────────────────────────────────────────── */
+function openDetail(id){
+  const p=parcels.find(x=>x.id===id);
+  if(!p)return;
+  currentParcel=p;
+  document.getElementById('detail-title').textContent=`📦 ${p.tracking_id}`;
+
+  const hist=JSON.parse(p.history||'[]');
+  const histHtml=hist.map(h=>`<li>
+    <div class="fw-600 text-sm">${h.status.replace('_',' ')} ${h.actor_label?`<span class="text-muted text-xs">— ${h.actor_label}</span>`:''}</div>
+    ${h.note?`<div class="text-xs text-muted">${h.note}</div>`:''}
+    <div class="text-xs text-muted">${fmtDate(h.time)}</div>
+  </li>`).join('');
+
+  document.getElementById('detail-body').innerHTML=`
+    <div class="grid-2 mb-3">
+      <div><span class="text-xs text-muted">Status</span><div>${badge(p.status)}</div></div>
+      <div><span class="text-xs text-muted">Courier</span><div class="text-sm fw-600">${p.courier_name}</div></div>
+      <div><span class="text-xs text-muted">Recipient</span><div class="text-sm">${p.recipient_name||'—'}</div></div>
+      <div><span class="text-xs text-muted">Phone</span><div class="text-sm">${p.phone||'—'}</div></div>
+      <div><span class="text-xs text-muted">Source → Dest</span><div class="text-sm">${p.source} → ${p.destination}</div></div>
+      <div><span class="text-xs text-muted">Weight</span><div class="text-sm">${p.weight_kg||'—'} kg</div></div>
+      ${p.driver?`<div><span class="text-xs text-muted">Driver</span><div class="text-sm">${p.driver} / ${p.vehicle||''}</div></div>`:''}
+    </div>
+    ${histHtml?`<div class="text-xs fw-600 text-muted mb-2">HISTORY</div><ul class="timeline">${histHtml}</ul>`:''}
+  `;
+
+  const actions=document.getElementById('detail-actions');
+  actions.innerHTML='';
+  if(p.status==='arrived'){
+    const b=document.createElement('button');b.className='btn btn-amber btn-sm';b.textContent='Sort';
+    b.onclick=()=>{sortParcel(p.id);hideModal('modal-parcel-detail')};actions.appendChild(b);
+  }
+  if(p.status==='dispatched'&&currentUser.role!=='driver'){
+    const b=document.createElement('button');b.className='btn btn-green btn-sm';b.textContent='✓ Confirm Delivery';
+    b.onclick=()=>{confirmDelivery(p.id);hideModal('modal-parcel-detail')};actions.appendChild(b);
+  }
+  showModal('modal-parcel-detail');
+}
+
+/* ── Add Parcel ────────────────────────────────────────────────────────── */
+async function submitParcel(){
+  const body={
+    tracking_id:document.getElementById('p-tracking').value.trim(),
+    courier_name:document.getElementById('p-courier').value.trim(),
+    source:document.getElementById('p-source').value.trim(),
+    destination:document.getElementById('p-dest').value.trim(),
+    recipient_name:document.getElementById('p-recip').value.trim(),
+    phone:document.getElementById('p-phone').value.trim(),
+    weight_kg:document.getElementById('p-weight').value,
+    notes:document.getElementById('p-notes').value.trim(),
+  };
+  if(!body.tracking_id||!body.courier_name||!body.destination)
+    return toast('Fill in required fields (*)','error');
+  try{
+    await api('POST','/api/parcels',body);
+    toast('Parcel received!','success');
+    hideModal('modal-add-parcel');
+    ['p-tracking','p-courier','p-dest','p-recip','p-phone','p-weight','p-notes'].forEach(id=>document.getElementById(id).value='');
+    loadDashboard();
+  }catch(e){toast(e.message,'error')}
+}
+
+/* ── Override ──────────────────────────────────────────────────────────── */
+function openOverride(id){currentParcel=parcels.find(x=>x.id===id);showModal('modal-override')}
+async function submitOverride(){
+  const status=document.getElementById('ov-status').value;
+  const reason=document.getElementById('ov-reason').value.trim();
+  if(!reason)return toast('Reason required','error');
+  try{
+    await api('PATCH',`/api/parcels/${currentParcel.id}/override`,{status,reason});
+    toast('Override applied','success');hideModal('modal-override');loadDashboard();
+  }catch(e){toast(e.message,'error')}
+}
+
+/* ══════════════════════════════════════════════════════════
+   STAFF TRACK
+══════════════════════════════════════════════════════════ */
+async function doStaffTrack(){
+  const tid=document.getElementById('staff-track-id').value.trim();
+  if(!tid)return;
+  const wrap=document.getElementById('staff-track-result');
+  wrap.innerHTML='<p class="text-muted">Searching…</p>';
+  try{
+    const p=await api('GET',`/api/parcels/track/${encodeURIComponent(tid)}`);
+    wrap.innerHTML=renderTrackResult(p,true);
+  }catch(e){wrap.innerHTML=`<p style="color:var(--red)">${e.message}</p>`}
+}
+
+/* ══════════════════════════════════════════════════════════
+   DISPATCH
+══════════════════════════════════════════════════════════ */
+async function loadDispatch(){
+  const runs=await api('GET','/api/dispatch');
+  const container=document.getElementById('dispatch-list');
+  if(!runs.length){container.innerHTML='<p class="text-muted">No dispatch runs yet.</p>';return}
+  container.innerHTML=runs.map(r=>`<div class="card mb-2">
+    <div class="flex items-center justify-between mb-1">
+      <span class="fw-700">${r.delivery_id}</span>
+      <span class="text-xs text-muted">${fmtDate(r.dispatch_time)}</span>
+    </div>
+    <div class="text-sm">Driver: <strong>${r.driver_name}</strong> | Vehicle: ${r.vehicle}</div>
+    <div class="mt-2 text-xs text-muted">${(r.parcels||[]).map(p=>`${p.tracking_id} → ${p.destination} ${badge(p.status)}`).join(' &nbsp; ')}</div>
+  </div>`).join('');
+}
+
+async function showModal_dispatch(){
+  // Load sorted parcels for checkboxes
+  const sorted=parcels.filter(p=>p.status==='sorted');
+  const list=document.getElementById('dispatch-parcel-list');
+  if(!sorted.length){list.innerHTML='<p class="text-xs text-muted p-2">No sorted parcels available</p>'}
+  else{
+    list.innerHTML=sorted.map(p=>`<label class="flex items-center gap-2 p-1" style="cursor:pointer">
+      <input type="checkbox" value="${p.id}" class="dispatch-check"/>
+      <span class="text-sm"><code>${p.tracking_id}</code> — ${p.recipient_name||'?'}, ${p.destination}</span>
+    </label>`).join('');
+  }
+  showModal('modal-dispatch');
+}
+
+async function submitDispatch(){
+  const driver=document.getElementById('d-driver').value.trim();
+  const vehicle=document.getElementById('d-vehicle').value.trim();
+  const notes=document.getElementById('d-notes').value.trim();
+  const parcel_ids=[...document.querySelectorAll('.dispatch-check:checked')].map(c=>+c.value);
+  if(!driver||!vehicle)return toast('Driver and vehicle required','error');
+  if(!parcel_ids.length)return toast('Select at least one parcel','error');
+  try{
+    await api('POST','/api/dispatch',{driver_name:driver,vehicle,notes,parcel_ids});
+    toast('Dispatch run created!','success');hideModal('modal-dispatch');
+    loadDashboard();loadDispatch();
+  }catch(e){toast(e.message,'error')}
+}
+
+/* ══════════════════════════════════════════════════════════
+   RETURNS (staff)
+══════════════════════════════════════════════════════════ */
+async function loadReturns(){
+  const list=await api('GET','/api/returns');
+  const container=document.getElementById('returns-list');
+  if(!list.length){container.innerHTML='<p class="text-muted">No return requests.</p>';return}
+  container.innerHTML=list.map(r=>`<div class="card mb-2">
+    <div class="flex items-center justify-between flex-wrap gap-2">
+      <div>
+        <span class="fw-700">${r.tracking_id}</span>
+        <span class="badge badge-${r.status==='pending'?'dispatched':r.status==='approved'?'sorted':r.status==='picked_up'?'delivered':'arrived'}" style="margin-left:.5rem">${r.status}</span>
+      </div>
+      <span class="text-xs text-muted">${fmtDate(r.requested_at)}</span>
+    </div>
+    <div class="text-sm mt-1">Recipient: ${r.recipient_name||'—'} | Destination: ${r.destination}</div>
+    <div class="text-sm text-muted mt-1">Reason: ${r.reason}</div>
+    ${r.status==='pending'?`<button class="btn btn-ghost btn-sm mt-2" onclick="openReturnReview(${r.id},'${r.tracking_id}','${r.reason.replace(/'/g,"\\'")}')">Review</button>`:''}
+  </div>`).join('');
+}
+
+function openReturnReview(id,tid,reason){
+  currentReturnId=id;
+  document.getElementById('return-review-body').innerHTML=`
+    <div class="text-sm"><strong>Tracking ID:</strong> ${tid}</div>
+    <div class="text-sm mt-1"><strong>Customer Reason:</strong> ${reason}</div>
+  `;
+  document.getElementById('return-review-note').value='';
+  showModal('modal-return-review');
+}
+
+async function resolveReturn(status){
+  const notes=document.getElementById('return-review-note').value.trim();
+  try{
+    await api('PATCH',`/api/returns/${currentReturnId}`,{status,notes});
+    toast(`Return ${status}!`,status==='approved'?'success':status==='rejected'?'error':'info');
+    hideModal('modal-return-review');loadReturns();
+  }catch(e){toast(e.message,'error')}
+}
+
+/* ══════════════════════════════════════════════════════════
+   DRIVER PANEL
+══════════════════════════════════════════════════════════ */
+async function loadDriverParcels(filter){
+  driverFilter=filter;
+  try{
+    const parcels=await api('GET','/api/delivery/my-parcels');
+    const filtered=filter==='all'?parcels:parcels.filter(p=>p.status===filter);
+    const container=document.getElementById('driver-parcels-list');
+
+    if(!filtered.length){
+      container.innerHTML=`<div class="card"><p class="text-muted">No ${filter==='all'?'':filter} parcels found.</p></div>`;
+      return;
+    }
+
+    container.innerHTML=filtered.map(p=>`<div class="driver-card">
+      <div class="driver-card-header">
+        <div>
+          <code class="fw-700">${p.tracking_id}</code>
+          ${badge(p.status)}
+        </div>
+        <div class="text-xs text-muted">${fmtDate(p.updated_at)}</div>
+      </div>
+      <div class="text-sm mt-1">📍 ${p.destination} ${p.recipient_name?`— <strong>${p.recipient_name}</strong>`:''}</div>
+      ${p.notes?`<div class="text-xs text-muted mt-1">${p.notes}</div>`:''}
+      ${p.status==='dispatched'?`
+        <div class="flex gap-2 mt-2 flex-wrap">
+          <button class="btn btn-green btn-sm" onclick="driverMarkDelivered(${p.id})">✓ Mark Delivered</button>
+          <button class="btn btn-red btn-sm" onclick="driverMarkFailed(${p.id})">✗ Failed / Return</button>
+        </div>`:''}
+    </div>`).join('');
+  }catch(e){toast(e.message,'error')}
+}
+
+async function driverMarkDelivered(id){
+  const note=prompt('Delivery note (optional):');
+  try{
+    await api('POST',`/api/delivery/driver-confirm/${id}`,{note:note||''});
+    toast('Marked as delivered!','success');
+    loadDriverParcels(driverFilter);
+  }catch(e){toast(e.message,'error')}
+}
+
+async function driverMarkFailed(id){
+  const note=prompt('Reason for failed delivery (required):');
+  if(!note)return toast('Reason is required','error');
+  try{
+    await api('POST',`/api/delivery/driver-failed/${id}`,{note});
+    toast('Failed delivery reported','warn');
+    loadDriverParcels(driverFilter);
+  }catch(e){toast(e.message,'error')}
+}
+
+/* ══════════════════════════════════════════════════════════
+   ADMIN
+══════════════════════════════════════════════════════════ */
+async function loadUsers(){
+  const users=await api('GET','/api/admin/users');
+  document.getElementById('users-list').innerHTML=`
+    <div class="table-wrap"><table>
+      <thead><tr><th>ID</th><th>Username</th><th>Name</th><th>Role</th><th>Created</th></tr></thead>
+      <tbody>${users.map(u=>`<tr>
+        <td>${u.id}</td><td><code>${u.username}</code></td><td>${u.name}</td>
+        <td><span class="badge badge-${u.role==='admin'?'return_requested':u.role==='driver'?'dispatched':'sorted'}">${u.role}</span></td>
+        <td class="text-xs text-muted">${fmtDate(u.created_at)}</td>
+      </tr>`).join('')}</tbody>
+    </table></div>`;
+}
+
+async function submitUser(){
+  const body={username:document.getElementById('u-user').value.trim(),name:document.getElementById('u-name').value.trim(),password:document.getElementById('u-pass').value,role:document.getElementById('u-role').value};
+  if(!body.username||!body.name||!body.password)return toast('All fields required','error');
+  try{
+    await api('POST','/api/admin/users',body);
+    toast('User created!','success');hideModal('modal-add-user');loadUsers();
+  }catch(e){toast(e.message,'error')}
+}
+
+async function adminExport(){
+  window.open('/api/admin/export','_blank');
+}
+
+/* ══════════════════════════════════════════════════════════
+   INIT
+══════════════════════════════════════════════════════════ */
+(async()=>{
+  try{
+    const user=await api('GET','/api/auth/me');
+    currentUser=user;bootApp();
+  }catch{
+    document.getElementById('login-screen').style.display='flex';
+  }
+
+  // Wire up dispatch modal open properly
+  document.querySelector('[onclick="showModal(\'modal-dispatch\')"]')
+    ?.setAttribute('onclick','showModal_dispatch()');
+  document.getElementById('main-nav')?.addEventListener('click',e=>{
+    if(e.target.dataset.page==='dispatch')setTimeout(()=>{
+      document.querySelector('#page-dispatch .btn-primary')?.setAttribute('onclick','showModal_dispatch()');
+    },50);
+  });
+})();
+</script>
+</body>
+</html>
